@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資料上傳</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .icon {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+        }
+        .modal {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .section {
+            margin: 20px 0;
+        }
+        select {
+            width: 80%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .success-message {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            width: auto;
+        }
+        .success-message div {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .success-message img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .upload-section {
+            display: none;
+        }
+        .drag-drop {
+            border: 2px dashed #007BFF;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            color: #007BFF;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        h1, h2 {
+            margin: 10px 0;
+        }
+        #sheetOptions, #columnOptions {
+            display: none;
+        }
+        .table-container {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <img id="homeIcon" class="icon" src="./photo_gallery/web_homepage/icon/web_home_icon.jpg" onclick="resetPage()">
+
+    <div>
+        <br><br><br>
+        <h1>TTM: Take the market</h1>
+        <h2>find best cost for your IC components</h2>
+    </div>
+    <div class="modal">
+        <div class="section">
+            <h2>選擇國家</h2>
+            <select id="country">
+                <option value="USA">美國</option>
+                <option value="CHINA">中國</option>
+                <option value="JAPAN">日本</option>
+                <!-- 添加更多國家選項 -->
+            </select>
+        </div>
+        <div class="section">
+            <h2>選擇語言</h2>
+            <select id="language">
+                <option value="english">英語</option>
+                <option value="chinese">中文</option>
+                <option value="japanese">日語</option>
+                <!-- 添加更多語言選項 -->
+            </select>
+        </div>
+        <div class="section">
+            <h2>選擇貨幣</h2>
+            <select id="currency">
+                <option value="usd">美元</option>
+                <option value="cny">人民幣</option>
+                <option value="jpy">日圓</option>
+                <!-- 添加更多貨幣選項 -->
+            </select>
+        </div>
+        <button onclick="confirmSelection()">確認</button>
+    </div>
+    <div class="success-message" id="successMessage">
+        <div>
+            <span id="selectedLanguage">English</span>
+        </div>
+        <div>
+            <img src="./photo_gallery/web_homepage/user_setup/icon_USA.jpg" alt="Country Icon">
+            <span id="selectedCountry">USA</span>
+        </div>
+        <div>
+            <img src="./photo_gallery/web_homepage/user_setup/icon_currency.jpg" alt="Country Icon">
+            <span id="selectedCurrency">USD</span>
+        </div>
+    </div>
+    <div class="upload-section" id="uploadSection">
+        <h2>資料上傳</h2>
+        <div class="drag-drop" id="dropZone">拖曳Excel文件到這裡上傳</div>
+        <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+        <div id="sheetOptions">
+            <h2>選擇工作表</h2>
+            <select id="sheetNames" onchange="updateColumnOptions()"></select>
+        </div>
+        <div id="columnOptions">
+            <h2>選擇欄位</h2>
+            <select id="columnNames"></select>
+            <button onclick="printSelectedData()">確認</button>
+        </div>
+        <div id="output"></div>
+    </div>
+    <script>
+        var iconPath = './photo_gallery/web_homepage/icon/web_home_icon.jpg';
+        document.getElementById('homeIcon').src = iconPath;
+
+        function confirmSelection() {
+            var country = document.getElementById('country').value;
+            var language = document.getElementById('language').value;
+            var currency = document.getElementById('currency').value;
+            var successMessage = document.getElementById('successMessage');
+            var modal = document.querySelector('.modal');
+            var uploadSection = document.getElementById('uploadSection');
+            
+            document.getElementById('selectedLanguage').textContent = language;
+            document.getElementById('selectedCountry').textContent =  country;
+            document.getElementById('selectedCurrency').textContent = currency;
+
+            successMessage.style.display = 'flex';
+            modal.style.display = 'none';
+            uploadSection.style.display = 'block';
+        }
+
+        function resetPage() {
+			var country = document.getElementById('country').value;
+			var language = document.getElementById('language').value;
+			var currency = document.getElementById('currency').value;
+
+			document.querySelector('.modal').style.display = 'block';
+			document.getElementById('uploadSection').style.display = 'none';
+			document.getElementById('successMessage').style.display = 'none';
+
+			document.getElementById('country').value = country;
+			document.getElementById('language').value = language;
+			document.getElementById('currency').value = currency;
+
+			// Reset upload section
+			document.getElementById('dropZone').textContent = '拖曳Excel文件到這裡上傳';
+			document.getElementById('fileInput').value = '';
+			document.getElementById('sheetOptions').style.display = 'none';
+			document.getElementById('columnOptions').style.display = 'none';
+			document.getElementById('output').innerHTML = '';
+		}
+
+
+        document.getElementById('dropZone').addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        document.getElementById('dropZone').addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                handleFileSelect({target: {files: files}});
+            }
+        });
+
+        document.getElementById('dropZone').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        var workbook;
+        function handleFileSelect(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, {type: 'array'});
+                    var sheetNames = workbook.SheetNames;
+
+                    var sheetSelect = document.getElementById('sheetNames');
+                    sheetSelect.innerHTML = '';
+
+                    sheetNames.forEach(function(sheetName) {
+                        var option = document.createElement('option');
+                        option.value = sheetName;
+                        option.textContent = sheetName;
+                        sheetSelect.appendChild(option);
+                    });
+
+                    document.getElementById('sheetOptions').style.display = 'block';
+                    document.getElementById('output').innerHTML = '';
+                    updateColumnOptions();
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function updateColumnOptions() {
+            var sheetName = document.getElementById('sheetNames').value;
+            var sheet = workbook.Sheets[sheetName];
+            var headers = XLSX.utils.sheet_to_json(sheet, {header: 1})[0];
+
+            var columnSelect = document.getElementById('columnNames');
+            columnSelect.innerHTML = '';
+
+            headers.forEach(function(header, index) {
+                var option = document.createElement('option');
+                option.value = index;
+                option.textContent = header;
+                columnSelect.appendChild(option);
+            });
+
+            document.getElementById('columnOptions').style.display = 'block';
+        }
+
+        function printSelectedData() {
+            var sheetName = document.getElementById('sheetNames').value;
+            var columnIndex = document.getElementById('columnNames').value;
+            var sheet = workbook.Sheets[sheetName];
+            var rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
+
+            var outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = '';
+
+            rows.forEach(function(row, index) {
+                if (index === 0) {
+                    outputDiv.innerHTML += `<strong>第一行: ${row[columnIndex]}</strong><br>`;
+                } else {
+                    outputDiv.innerHTML += `${row[columnIndex]}<br>`;
+                }
+            });
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</body>
+</html>
